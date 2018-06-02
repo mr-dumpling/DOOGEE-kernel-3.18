@@ -73,8 +73,8 @@
 	};
 
 	 /*  start sensor */
-	cust_accel@0 {
-		compatible = "mediatek,cust_mxc400x";
+	cust_accel@1 {
+		compatible = "mediatek,mxc400x";
 		i2c_num 	= <0x2>;
 		i2c_addr 	= <0x15 0x0 0x0 0x0>;
 		direction 	= <0x3>;
@@ -105,6 +105,29 @@
 
 	mt-extmem@0 {
 		compatible = "mediatek,mt-extmem";
+	};
+	fingerprint@ {
+		compatible = "mediatek,fingerprint";
+		vfingerprint-supply = <0xe>;
+		pinctrl-names = "default", "state_spi_eint_init", "state_eint_pull_down", "state_eint_pull_disable", "state_spi_rst_low", "state_spi_rst_high", "state_spi_cs_init", "state_spi_ck_init", "state_spi_mosi_init", "state_spi_miso_init";
+		pinctrl-0 = <&gpiodefault>;
+		pinctrl-1 = <&spi_int_init>;
+		pinctrl-2 = <&spi_int_out0>;
+		pinctrl-3 = <&spi_int_out1>;
+		pinctrl-4 = <&spi_rst_out0>;
+		pinctrl-5 = <&spi_int_out1>;
+		pinctrl-6 = <&spi_cs_init>;
+		pinctrl-7 = <&spi_ck_init>;
+		pinctrl-8 = <&spi_mosi_init>;
+		pinctrl-9 = <&spi_miso_init>;
+		interrupt-parent = <&eintc>;
+		interrupts = <0xf 0x2>;
+		debounce = <0xf 0x0>;
+		status = "okay";
+	};
+
+	cdfinger_tee {
+		compatible = "cdfinger,fingerprint_tee";
 	};
 };
 
@@ -332,12 +355,9 @@
 &touch {
 	tpd-resolution = <720 1280>;
 	use-tpd-button = <1>;
-	tpd-key-num = <4>;
-	tpd-key-local= <139 158 217 172 0>;
-	tpd-key-dim-local = <160 2000 70 40    950 2000 70 40    200 2000 70 40    540 2000 70 40    0 0 0 0>;
 	tpd-key-num = <0x3>;
 	tpd-key-local = <0x8b 0xac 0x9e 0x0>;
-	tpd-key-dim-local = <0x5a 0x373 0x64 0x28 0xe6 0x373 0x64 0x28 0x172 0x373 0x64 0x28 0x0 0x0 0x0 0x0>;
+	tpd-key-dim-local = <0x50 1350 0x64 0x28   0xf0 1350 0x64 0x28   0x190 1350 0x64 0x28   0x0 0x0 0x0 0x0>;
 	tpd-max-touch-num = <0x5>;
 	tpd-filter-enable = <0x0>;
 	tpd-filter-pixel-density = <0x7c>;
@@ -925,7 +945,10 @@
 
 /******* SPI FINGERPRINT *******/
 &pio {
-	spi_int_init {
+	gpiodefault: gpiodefault {
+	};
+
+	spi_int_init: spi_int_init {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO15__FUNC_EINT15>;
 			slew-rate = <0x0>;
@@ -933,7 +956,7 @@
 		};
 	};
 
-	spi_int_out0@0 {
+	spi_int_out0: spi_int_out0@0 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO15__FUNC_GPIO15>;
 			slew-rate = <0x1>;
@@ -941,7 +964,7 @@
 		};
 	};
 
-	spi_int_out1@1 {
+	spi_int_out1: spi_int_out1@1 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO15__FUNC_GPIO15>;
 			slew-rate = <0x1>;
@@ -949,7 +972,7 @@
 		};
 	};
 
-	spi_rst_out0@0 {
+	spi_rst_out0: spi_rst_out0@0 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO19__FUNC_GPIO19>;
 			slew-rate = <0x1>;
@@ -957,7 +980,7 @@
 		};
 	};
 
-	spi_rst_out1@1 {
+	spi_rst_out1: spi_rst_out1@1 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO19__FUNC_GPIO19>;
 			slew-rate = <0x1>;
@@ -965,7 +988,7 @@
 		};
 	};
 
-	spi_cs_init@0 {
+	spi_cs_init: spi_cs_init@0 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO0__FUNC_SPI1_CS>;
 			slew-rate = <0x1>;
@@ -973,7 +996,7 @@
 		};
 	};
 
-	spi_ck_init@0 {
+	spi_ck_init: spi_ck_init@0 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO1__FUNC_SPI1_SCK>;
 			slew-rate = <0x1>;
@@ -981,7 +1004,7 @@
 		};
 	};
 
-	spi_mosi_init@0 {
+	spi_mosi_init: spi_mosi_init@0 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO2__FUNC_SPI1_MOSI>;
 			slew-rate = <0x1>;
@@ -989,7 +1012,7 @@
 		};
 	};
 
-	spi_miso_init@0 {
+	spi_miso_init: spi_miso_init@0 {
 		pins_cmd_dat {
 			pins = <PINMUX_GPIO3__FUNC_SPI1_MISO>;
 			slew-rate = <0x0>;
