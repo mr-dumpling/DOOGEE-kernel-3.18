@@ -17,7 +17,7 @@ script:
   - make -C $PWD O=$PWD/out ARCH=arm KIICAA_POWER_defconfig
   - make -j8 -C $PWD O=$PWD/out ARCH=arm
   - cp out/arch/arm/boot/zImage-dtb zImage-t59-$(date +%Y%b%d%H%M)
-  - curl --upload-file zImage-vs* https://transfer.sh
+  - curl --upload-file zImage-t59* https://transfer.sh
 
 deploy:
   provider: releases
