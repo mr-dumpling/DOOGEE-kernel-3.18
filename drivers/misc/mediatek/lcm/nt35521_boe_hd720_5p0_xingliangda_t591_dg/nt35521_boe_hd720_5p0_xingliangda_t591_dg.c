@@ -201,56 +201,99 @@ static void lcm_get_params(LCM_PARAMS *params)
 
 	memset(params, 0, sizeof(LCM_PARAMS));
 
-	params->type   = 2;
+// 	params->type   = 2;
 
-	params->width  = FRAME_WIDTH;
-	params->height = FRAME_HEIGHT;
+// 	params->width  = FRAME_WIDTH;
+// 	params->height = FRAME_HEIGHT;
 
-	// enable tearing-free
+// 	// enable tearing-free
+// 	params->dbi.te_mode = 1;
+// 	params->dbi.te_edge_polarity = 0;
+
+// 	params->dsi.mode = 1;
+
+// 	// DSI
+// 	/* Command mode setting */
+// 	//1 Three lane or Four lane
+// //	params->dsi.LANE_NUM				= LCM_THREE_LANE;
+// 	params->dsi.LANE_NUM				= LCM_FOUR_LANE;
+// 	//The following defined the fomat for data coming from LCD engine.
+// 	params->dsi.data_format.color_order = LCM_COLOR_ORDER_RGB;
+// 	params->dsi.data_format.trans_seq   = LCM_DSI_TRANS_SEQ_MSB_FIRST;
+// 	params->dsi.data_format.padding     = LCM_DSI_PADDING_ON_LSB;
+// 	params->dsi.data_format.format      = LCM_DSI_FORMAT_RGB888;
+
+// 	// Highly depends on LCD driver capability.
+// 	params->dsi.packet_size=128;
+
+// 	/** Video mode setting
+// 	 because DSI/DPI HW design change,
+// 	 this parameters should be 0 when video mode in MT658X;
+// 	 or memory leakage */
+// 	params->dsi.intermediat_buffer_num = 0;
+
+// 	params->dsi.PS=LCM_PACKED_PS_24BIT_RGB888;
+// 	params->dsi.word_count=720*3;	
+// 	params->dsi.compatibility_for_nvk = 1;
+
+// 	params->dsi.vertical_sync_active				= 4;// 3    2
+// 	params->dsi.vertical_backporch					= 38;// 20   1
+// 	params->dsi.vertical_frontporch					= 40; // 1  12
+// 	params->dsi.vertical_active_line				= FRAME_HEIGHT;
+
+// 	params->dsi.horizontal_sync_active				= 10;// 50  2
+// 	params->dsi.horizontal_backporch				= 72;
+// 	params->dsi.horizontal_frontporch				= 72 ;
+// 	params->dsi.horizontal_active_pixel				= FRAME_WIDTH;
+
+// 	// Bit rate calculation
+// 	// 1 Every lane speed
+// 	params->dsi.pll_div1=4;
+// 	params->dsi.pll_div2=12;	
+// 	params->dsi.fbk_div =16;	
+	  
+	params->dsi.horizontal_frontporch_byte = 3;
+	params->dsi.CLK_HS_PRPR = 512;
+	params->dsi.CLK_TRAIL = 2160;
+	params->dsi.pll_div2 = 12;
+	params->dsi.fbk_div = 16;
+	params->dsi.dsc_params.scale_value = 250;
+	params->dsi.lfr_enable = 10;
+	params->dsi.lfr_enable = -100;
+	
+	params->width = 720;
+	
+	params->type = 2;
+	params->dsi.horizontal_frontporch_word_count = 2;
+	params->dsi.TA_SACK = 2;
+	
+	params->dsi.rg_bp = 720;
+	
+	params->height = 1280;
+	
+	params->dsi.pll_posdiv = 1280;
 	params->dbi.te_mode = 1;
+	
+	params->dsi.horizontal_active_pixel = 1; //wtf
+	
+	params->dsi.dsc_params.final_offset = 1;
+	params->dsi.dsc_params.nfl_bpg_offset = 1;
+	params->dsi.send_frame_enable = 1;
+	params->dsi.vertical_vfp_lp = 1;
+	
+	params->dsi.lane_swap[1][5] = 1;
+	
+	params->dsi.lfr_enable = 1;
 	params->dbi.te_edge_polarity = 0;
-
-	params->dsi.mode = 1;
-
-	// DSI
-	/* Command mode setting */
-	//1 Three lane or Four lane
-//	params->dsi.LANE_NUM				= LCM_THREE_LANE;
-	params->dsi.LANE_NUM				= LCM_FOUR_LANE;
-	//The following defined the fomat for data coming from LCD engine.
-	params->dsi.data_format.color_order = LCM_COLOR_ORDER_RGB;
-	params->dsi.data_format.trans_seq   = LCM_DSI_TRANS_SEQ_MSB_FIRST;
-	params->dsi.data_format.padding     = LCM_DSI_PADDING_ON_LSB;
-	params->dsi.data_format.format      = LCM_DSI_FORMAT_RGB888;
-
-	// Highly depends on LCD driver capability.
-	params->dsi.packet_size=128;
-
-	/** Video mode setting
-	 because DSI/DPI HW design change,
-	 this parameters should be 0 when video mode in MT658X;
-	 or memory leakage */
-	params->dsi.intermediat_buffer_num = 0;
-
-	params->dsi.PS=LCM_PACKED_PS_24BIT_RGB888;
-	params->dsi.word_count=720*3;	
-	params->dsi.compatibility_for_nvk = 1;
-
-	params->dsi.vertical_sync_active				= 4;// 3    2
-	params->dsi.vertical_backporch					= 38;// 20   1
-	params->dsi.vertical_frontporch					= 40; // 1  12
-	params->dsi.vertical_active_line				= FRAME_HEIGHT;
-
-	params->dsi.horizontal_sync_active				= 10;// 50  2
-	params->dsi.horizontal_backporch				= 72;
-	params->dsi.horizontal_frontporch				= 72 ;
-	params->dsi.horizontal_active_pixel				= FRAME_WIDTH;
-
-	// Bit rate calculation
-	// 1 Every lane speed
-	params->dsi.pll_div1=4;
-	params->dsi.pll_div2=12;	
-	params->dsi.fbk_div =16;	
+	
+	params->dsi.rgb_byte = 0;
+	params->dsi.horizontal_sync_active_word_count = 0;
+	params->dsi.horizontal_backporch_word_count = 0;
+	params->dsi.HS_TRAIL = 0;
+	params->dsi.pll_div1 = 4;
+	params->dsi.pll_s2qdiv = 4;
+	params->dsi.fbk_sel = 40;
+	params->dsi.rg_bir = 40;
 }
 
 static void lcm_init(void)
