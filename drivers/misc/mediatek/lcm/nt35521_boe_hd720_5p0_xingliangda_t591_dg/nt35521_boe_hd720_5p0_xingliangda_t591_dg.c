@@ -253,8 +253,8 @@ static void lcm_get_params(LCM_PARAMS *params)
 // 	params->dsi.fbk_div =16;	
 	  
 	params->dsi.horizontal_frontporch_byte = 3;
-	params->dsi.CLK_HS_PRPR = 512;
-	params->dsi.CLK_TRAIL = 2160;
+	//params->dsi.CLK_HS_PRPR = 512;
+	//params->dsi.CLK_TRAIL = 2160;
 	params->dsi.pll_div2 = 12;
 	params->dsi.fbk_div = 16;
 	params->dsi.dsc_params.scale_value = 250;
