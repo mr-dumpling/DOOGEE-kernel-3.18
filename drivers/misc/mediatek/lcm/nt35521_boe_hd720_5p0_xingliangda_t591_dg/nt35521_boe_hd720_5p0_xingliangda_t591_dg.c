@@ -1,25 +1,41 @@
-/* t591_dg_a57_bd_we -  */
-#include <linux/string.h>
+/*
+ * No Warranty
+ * parthibx24 <e.inxpired@gmail.com>
+ */
+
 #include "lcm_drv.h"
 
+/* Local Constants */
+#define LCM_NAME "nt35521_boe_hd720_5p0_xingliangda_t591_dg"
+#define LCM_ID (0x5521)
 #define FRAME_WIDTH  (720)
 #define FRAME_HEIGHT (1280)
 
+#define REGFLAG_DELAY (0xFE)
+#define REGFLAG_END_OF_TABLE (0xFF) /* END OF REGISTERS MARKER */
+
+/* Local Variables */
+#define SET_RESET_PIN(v) (lcm_util.set_reset_pin((v)))
 #define UDELAY(n) (lcm_util.udelay(n))
 #define MDELAY(n) (lcm_util.mdelay(n))
 
-#define SET_RESET_PIN(v)    (lcm_util.set_reset_pin((v)))
-#define dsi_set_cmdq_V2(cmd, count, ppara, force_update)	        lcm_util.dsi_set_cmdq_V2(cmd, count, ppara, force_update)
+#define LCM_DBG_TAG "[LCM][V060]"
+#ifndef BUILD_LK
+#define LCM_LOGD(str, args...) pr_info(LCM_DBG_TAG "[%s][%s] " str, LCM_NAME, __func__, ##args)
+#endif
+
+/* Local Functions */
+#define dsi_set_cmdq_V3(para_tbl,size,force_update)         lcm_util.dsi_set_cmdq_V3(para_tbl,size,force_update)
+#define dsi_set_cmdq_V2(cmd, count, ppara, force_update)	lcm_util.dsi_set_cmdq_V2(cmd, count, ppara, force_update)
 #define dsi_set_cmdq(pdata, queue_size, force_update)		lcm_util.dsi_set_cmdq(pdata, queue_size, force_update)
-#define wrtie_cmd(cmd)										lcm_util.dsi_write_cmd(cmd)
-#define write_regs(addr, pdata, byte_nums)					lcm_util.dsi_write_regs(addr, pdata, byte_nums)
-#define read_reg(cmd)											lcm_util.dsi_dcs_read_lcm_reg(cmd)
-#define read_reg_v2(cmd, buffer, buffer_size)   				lcm_util.dsi_dcs_read_lcm_reg_v2(cmd, buffer, buffer_size)   
+#define read_reg_v2(cmd, buffer, buffer_size)	            lcm_util.dsi_dcs_read_lcm_reg_v2(cmd, buffer, buffer_size)
+#define write_regs(addr, pdata, byte_nums)	                lcm_util.dsi_write_regs(addr, pdata, byte_nums)
+#define read_reg(cmd)   lcm_util.dsi_dcs_read_lcm_reg(cmd)
+#define wrtie_cmd(cmd)	lcm_util.dsi_write_cmd(cmd)
 
-#define   LCM_DSI_CMD_MODE							0
+/* LCM Driver Implementations */
 
-
-static LCM_UTIL_FUNCS lcm_util = {0};
+static LCM_UTIL_FUNCS lcm_util = { 0 };
 
 struct LCM_setting_table {
     unsigned cmd;
@@ -27,311 +43,321 @@ struct LCM_setting_table {
     unsigned char para_list[64];
 };
 
+static struct LCM_setting_table lcm_initialization_setting[] = {
 
-// NT355211 on 0x104BF6C
-#define REGFLAG_DELAY                                       0XFE
-#define REGFLAG_END_OF_TABLE                                0xFF   // END OF REGISTERS MARKER
-static struct LCM_setting_table lcm_initialization_setting[] =
-{
-	{0xff, 4, {0xaa,0x55,0x25,0x01}},
-	{0xfc, 1, {0x08}},
-	{0xfc, 1, {0x00}},
-	{0x6f, 1, {0x21}},
-	{0xf7, 1, {0x01}},
-	{0x6f, 1, {0x21}},
-	{0xf7, 1, {0x00}},
-	{0x6f, 1, {0x1a}},
-	{0xf7, 1, {0x05}},
-	{0x6f, 1, {0x16}},
-	{0xf7, 1, {0x10}},
-	{0xff, 4, {0xaa,0x55,0x25,0x00}},
-	{0xf0, 5, {0x55,0xaa,0x52,0x08,0x00}},
-	{0xb1, 2, {0x68,0x27}},
-	{0xb8, 4, {0x01,0x02,0x0c,0x02}},
-	{0xbb, 2, {0x11,0x11}},
-	{0xbc, 2, {0x00,0x00}},
-	{0xb6, 1, {0x04}},
-	{0xc8, 1, {0x80}},
-	{0xf0, 5, {0x55,0xaa,0x52,0x08,0x01}},
-	{0xb0, 2, {0x09,0x09}},
-	{0xb1, 2, {0x09,0x09}},
-	{0xbc, 2, {0x7b,0x00}},
-	{0xbd, 2, {0x7b,0x00}},
-	{0xca, 1, {0x00}},
-	{0xc0, 1, {0x0c}},
-	{0xb5, 2, {0x03,0x03}},
-	{0xbe, 1, {0x38}},
-	{0xb3, 2, {0x19,0x19}},
-	{0xb4, 2, {0x19,0x19}},
-	{0xb9, 2, {0x26,0x26}},
-	{0xba, 2, {0x36,0x36}},
-	{0xf0, 5, {0x55,0xaa,0x52,0x08,0x02}},
-	{0xee, 1, {0x01}},
-	{0xb0, 16, {0x00,0x00,0x00,0x0a,0x00,0x1d,0x00,0x2f,0x00,0x3e,0x00,0x5c,0x00,0x76,0x00,0xa2}},
-	{0xb1, 16, {0x00,0xc6,0x01,0x04,0x01,0x36,0x01,0x85,0x01,0xc7,0x01,0xc8,0x02,0x03,0x02,0x46}},
-	{0xb2, 16, {0x02,0x71,0x02,0xae,0x02,0xd8,0x03,0x11,0x03,0x37,0x03,0x68,0x03,0x89,0x03,0xb0}},
-	{0xb3, 4, {0x03,0xdd,0x03,0xff}},
-	{0xf0, 5, {0x55,0xaa,0x52,0x08,0x06}},
-	{0xb0, 2, {0x10,0x12}},
-	{0xb1, 2, {0x14,0x16}},
-	{0xb2, 2, {0x00,0x02}},
-	{0xb3, 2, {0x31,0x31}},
-	{0xb4, 2, {0x31,0x34}},
-	{0xb5, 2, {0x34,0x34}},
-	{0xb6, 2, {0x34,0x31}},
-	{0xb7, 2, {0x31,0x31}},
-	{0xb8, 2, {0x31,0x31}},
-	{0xb9, 2, {0x2d,0x2e}},
-	{0xba, 2, {0x2e,0x2d}},
-	{0xbb, 2, {0x31,0x31}},
-	{0xbc, 2, {0x31,0x31}},
-	{0xbd, 2, {0x31,0x34}},
-	{0xbe, 2, {0x34,0x34}},
-	{0xbf, 2, {0x34,0x31}},
-	{0xc0, 2, {0x31,0x31}},
-	{0xc1, 2, {0x03,0x01}},
-	{0xc2, 2, {0x17,0x15}},
-	{0xc3, 2, {0x13,0x11}},
-	{0xe5, 2, {0x31,0x31}},
-	{0xc4, 2, {0x17,0x15}},
-	{0xc5, 2, {0x13,0x11}},
-	{0xc6, 2, {0x03,0x01}},
-	{0xc7, 2, {0x31,0x31}},
-	{0xc8, 2, {0x31,0x34}},
-	{0xc9, 2, {0x34,0x34}},
-	{0xca, 2, {0x34,0x31}},
-	{0xcb, 2, {0x31,0x31}},
-	{0xcc, 2, {0x31,0x31}},
-	{0xcd, 2, {0x2e,0x2d}},
-	{0xce, 2, {0x2d,0x2e}},
-	{0xcf, 2, {0x31,0x31}},
-	{0xd0, 2, {0x31,0x31}},
-	{0xd1, 2, {0x31,0x34}},
-	{0xd2, 2, {0x34,0x34}},
-	{0xd3, 2, {0x34,0x31}},
-	{0xd4, 2, {0x31,0x31}},
-	{0xd5, 2, {0x00,0x02}},
-	{0xd6, 2, {0x10,0x12}},
-	{0xd7, 2, {0x14,0x16}},
-	{0xe6, 2, {0x32,0x32}},
-	{0xd8, 5, {0x00,0x00,0x00,0x00,0x00}},
-	{0xd9, 5, {0x00,0x00,0x00,0x00,0x00}},
-	{0xe7, 1, {0x00}},
-	{0xf0, 5, {0x55,0xaa,0x52,0x08,0x05}},
-	{0xed, 1, {0x30}},
-	{0xb0, 2, {0x17,0x06}},
-	{0xb8, 1, {0x00}},
-	{0xc0, 1, {0x0d}},
-	{0xc1, 1, {0x0b}},
-	{0xc2, 1, {0x23}},
-	{0xc3, 1, {0x40}},
-	{0xc4, 1, {0x84}},
-	{0xc5, 1, {0x82}},
-	{0xc6, 1, {0x82}},
-	{0xc7, 1, {0x80}},
-	{0xc8, 2, {0x0b,0x30}},
-	{0xc9, 2, {0x05,0x10}},
-	{0xca, 2, {0x01,0x10}},
-	{0xcb, 2, {0x01,0x10}},
-	{0xd1, 5, {0x03,0x05,0x05,0x07,0x00}},
-	{0xd2, 5, {0x03,0x05,0x09,0x03,0x00}},
-	{0xd3, 5, {0x00,0x00,0x6a,0x07,0x10}},
-	{0xd4, 5, {0x30,0x00,0x6a,0x07,0x10}},
-	{0xf0, 5, {0x55,0xaa,0x52,0x08,0x03}},
-	{0xb0, 2, {0x00,0x00}},
-	{0xb1, 2, {0x00,0x00}},
-	{0xb2, 5, {0x05,0x00,0x0a,0x00,0x00}},
-	{0xb3, 5, {0x05,0x00,0x0a,0x00,0x00}},
-	{0xb4, 5, {0x05,0x00,0x0a,0x00,0x00}},
-	{0xb5, 5, {0x05,0x00,0x0a,0x00,0x00}},
-	{0xb6, 5, {0x02,0x00,0x0a,0x00,0x00}},
-	{0xb7, 5, {0x02,0x00,0x0a,0x00,0x00}},
-	{0xb8, 5, {0x02,0x00,0x0a,0x00,0x00}},
-	{0xb9, 5, {0x02,0x00,0x0a,0x00,0x00}},
-	{0xba, 5, {0x53,0x00,0x0a,0x00,0x00}},
-	{0xbb, 5, {0x53,0x00,0x0a,0x00,0x00}},
-	{0xbc, 5, {0x53,0x00,0x0a,0x00,0x00}},
-	{0xbd, 5, {0x53,0x00,0x0a,0x00,0x00}},
-	{0xc4, 1, {0x60}},
-	{0xc5, 1, {0x40}},
-	{0xc6, 1, {0x64}},
-	{0xc7, 1, {0x44}},
-	{0x11, 0, {0x00,0x00}},
-	{REGFLAG_DELAY, 120, {}}, //0xfe?
-	{0x29, 0, {0x00,0x00}},
-	{REGFLAG_DELAY, 10, {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
-	{REGFLAG_END_OF_TABLE, 0x00, {}}  //Stop cmd is 0xff
+    {0xff, 4, {0x55,0x25,0x01,0x00}},
+    {0xfc, 1, {0x08}},
+    {0xfc, 1, {0x00}},
+    {0x6f, 1, {0x21}},
+    {0xf7, 1, {0x01}},
+    {0x6f, 1, {0x21}},
+    {0xf7, 1, {0x00}},
+    {0x6f, 1, {0x1a}},
+    {0xf7, 1, {0x05}},
+    {0x6f, 1, {0x16}},
+    {0xf7, 1, {0x10}},
+    {0xff, 4, {0xaa,0x55,0x25,0x00}},
+    {0xf0, 5, {0x55,0xaa,0x52,0x08,0x00}},
+    {0xb1, 2, {0x68,0x27}},
+    {0xb8, 4, {0x01,0x02,0x0c,0x02}},
+    {0xbb, 2, {0x11,0x11}},
+    {0xbc, 2, {0x00,0x00}},
+    {0xb6, 1, {0x04}},
+    {0xc8, 1, {0x80}},
+    {0xf0, 5, {0x55,0xaa,0x52,0x08,0x01}},
+    {0xb0, 2, {0x09,0x09}},
+    {0xb1, 2, {0x09,0x09}},
+    {0xbc, 2, {0x7b,0x00}},
+    {0xbd, 2, {0x7b,0x00}},
+    {0xca, 1, {0x00}},
+    {0xc0, 1, {0x0c}},
+    {0xb5, 2, {0x03,0x03}},
+    {0xbe, 1, {0x38}},
+    {0xb3, 2, {0x19,0x19}},
+    {0xb4, 2, {0x19,0x19}},
+    {0xb9, 2, {0x26,0x26}},
+    {0xba, 2, {0x36,0x36}},
+    {0xf0, 5, {0x55,0xaa,0x52,0x08,0x02}},
+    {0xee, 1, {0x01}},
+    {0xb0, 16, {0x00,0x00,0x00,0x0a,0x00,0x1d,0x00,0x2f,0x00,0x3e,0x00,0x5c,0x00,0x76,0x00,0xa2}},
+    {0xb1, 16, {0x00,0xc6,0x01,0x04,0x01,0x36,0x01,0x85,0x01,0xc7,0x01,0xc8,0x02,0x03,0x02,0x46}},
+    {0xb2, 16, {0x02,0x71,0x02,0xae,0x02,0xd8,0x03,0x11,0x03,0x37,0x03,0x68,0x03,0x89,0x03,0xb0}},
+    {0xb3, 4, {0x03,0xdd,0x03,0xff}},
+    {0xf0, 5, {0x55,0xaa,0x52,0x08,0x06}},
+    {0xb0, 2, {0x10,0x12}},
+    {0xb1, 2, {0x14,0x16}},
+    {0xb2, 2, {0x00,0x02}},
+    {0xb3, 2, {0x31,0x31}},
+    {0xb4, 2, {0x31,0x34}},
+    {0xb5, 2, {0x34,0x34}},
+    {0xb6, 2, {0x34,0x31}},
+    {0xb7, 2, {0x31,0x31}},
+    {0xb8, 2, {0x31,0x31}},
+    {0xb9, 2, {0x2d,0x2e}},
+    {0xba, 2, {0x2e,0x2d}},
+    {0xbb, 2, {0x31,0x31}},
+    {0xbc, 2, {0x31,0x31}},
+    {0xbd, 2, {0x31,0x34}},
+    {0xbe, 2, {0x34,0x34}},
+    {0xbf, 2, {0x34,0x31}},
+    {0xc0, 2, {0x31,0x31}},
+    {0xc1, 2, {0x03,0x01}},
+    {0xc2, 2, {0x17,0x15}},
+    {0xc3, 2, {0x13,0x11}},
+    {0xe5, 2, {0x31,0x31}},
+    {0xc4, 2, {0x17,0x15}},
+    {0xc5, 2, {0x13,0x11}},
+    {0xc6, 2, {0x03,0x01}},
+    {0xc7, 2, {0x31,0x31}},
+    {0xc8, 2, {0x31,0x34}},
+    {0xc9, 2, {0x34,0x34}},
+    {0xca, 2, {0x34,0x31}},
+    {0xcb, 2, {0x31,0x31}},
+    {0xcc, 2, {0x31,0x31}},
+    {0xcd, 2, {0x2e,0x2d}},
+    {0xce, 2, {0x2d,0x2e}},
+    {0xcf, 2, {0x31,0x31}},
+    {0xd0, 2, {0x31,0x31}},
+    {0xd1, 2, {0x31,0x34}},
+    {0xd2, 2, {0x34,0x34}},
+    {0xd3, 2, {0x34,0x31}},
+    {0xd4, 2, {0x31,0x31}},
+    {0xd5, 2, {0x00,0x02}},
+    {0xd6, 2, {0x10,0x12}},
+    {0xd7, 2, {0x14,0x16}},
+    {0xe6, 2, {0x32,0x32}},
+    {0xd8, 5, {0x00,0x00,0x00,0x00,0x00}},
+    {0xd9, 5, {0x00,0x00,0x00,0x00,0x00}},
+    {0xe7, 1, {0x00}},
+    {0xf0, 5, {0x55,0xaa,0x52,0x08,0x05}},
+    {0xed, 1, {0x30}},
+    {0xb0, 2, {0x17,0x06}},
+    {0xb8, 1, {0x00}},
+    {0xc0, 1, {0x0d}},
+    {0xc1, 1, {0x0b}},
+    {0xc2, 1, {0x23}},
+    {0xc3, 1, {0x40}},
+    {0xc4, 1, {0x84}},
+    {0xc5, 1, {0x82}},
+    {0xc6, 1, {0x82}},
+    {0xc7, 1, {0x80}},
+    {0xc8, 2, {0x0b,0x30}},
+    {0xc9, 2, {0x05,0x10}},
+    {0xca, 2, {0x01,0x10}},
+    {0xcb, 2, {0x01,0x10}},
+    {0xd1, 5, {0x03,0x05,0x05,0x07,0x00}},
+    {0xd2, 5, {0x03,0x05,0x09,0x03,0x00}},
+    {0xd3, 5, {0x00,0x00,0x6a,0x07,0x10}},
+    {0xd4, 5, {0x30,0x00,0x6a,0x07,0x10}},
+    {0xf0, 5, {0x55,0xaa,0x52,0x08,0x03}},
+    {0xb0, 2, {0x00,0x00}},
+    {0xb1, 2, {0x00,0x00}},
+    {0xb2, 5, {0x05,0x00,0x0a,0x00,0x00}},
+    {0xb3, 5, {0x05,0x00,0x0a,0x00,0x00}},
+    {0xb4, 5, {0x05,0x00,0x0a,0x00,0x00}},
+    {0xb5, 5, {0x05,0x00,0x0a,0x00,0x00}},
+    {0xb6, 5, {0x02,0x00,0x0a,0x00,0x00}},
+    {0xb7, 5, {0x02,0x00,0x0a,0x00,0x00}},
+    {0xb8, 5, {0x02,0x00,0x0a,0x00,0x00}},
+    {0xb9, 5, {0x02,0x00,0x0a,0x00,0x00}},
+    {0xba, 5, {0x53,0x00,0x0a,0x00,0x00}},
+    {0xbb, 5, {0x53,0x00,0x0a,0x00,0x00}},
+    {0xbc, 5, {0x53,0x00,0x0a,0x00,0x00}},
+    {0xbd, 5, {0x53,0x00,0x0a,0x00,0x00}},
+    {0xc4, 1, {0x60}},
+    {0xc5, 1, {0x40}},
+    {0xc6, 1, {0x64}},
+    {0xc7, 1, {0x44}},
+    {0x11, 0, {0x00,0x00}},
+    {REGFLAG_DELAY, 120, {}},
+    {0x29, 0, {0x00,0x00}},
+    {REGFLAG_DELAY, 10, {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
+    {REGFLAG_END_OF_TABLE, 0x00, {}}
 
 };
 
+static struct LCM_setting_table lcm_deep_sleep_mode_in_setting[] = {
+    // Display off sequence
+    { 0x28, 1, { 0x00 } },
+    { REGFLAG_DELAY, 20, { } },
+
+    // Sleep Mode On
+    { 0x10, 1, { 0x00 } },
+    { REGFLAG_DELAY, 120, {} },
+
+    { REGFLAG_END_OF_TABLE, 0x00, {} }
+};
 
 static void push_table(struct LCM_setting_table *table, unsigned int count, unsigned char force_update)
 {
-	    unsigned int i;
-	
-	    for(i = 0; i < count; i++)
-	    {
-	
-	        unsigned cmd;
-	        cmd = table[i].cmd;
-	
-	        switch (cmd)
-	        {
-	            case REGFLAG_DELAY :
-	                MDELAY(table[i].count);
-	                break;
-	            case REGFLAG_END_OF_TABLE :
-	                break;
-	            default:
-					//dsi_send_cmdq_tinno(cmd, table[i].count, table[i].para_list, force_update);
-					dsi_set_cmdq_V2(cmd, table[i].count, table[i].para_list, force_update);
-	        }
-	    }
+    unsigned int i;
 
+    for(i = 0; i < count; i++) {
+        unsigned cmd;
+        cmd = table[i].cmd;
+        
+        switch (cmd) {
+        case REGFLAG_DELAY :
+            MDELAY(table[i].count);
+            break; 
+        case REGFLAG_END_OF_TABLE :
+            break;
+        default:
+            dsi_set_cmdq_V2(cmd, table[i].count, table[i].para_list, force_update);
+        }
+    }
+    
 }
 
 static void lcm_set_util_funcs(const LCM_UTIL_FUNCS *util)
 {
-	    memcpy(&lcm_util, util, sizeof(LCM_UTIL_FUNCS));
+    memcpy(&lcm_util, util, sizeof(LCM_UTIL_FUNCS));
 }
 
-
-static void lcm_get_params(LCM_PARAMS *params)
-{
-
+static void lcm_get_params(LCM_PARAMS *params) {
 	memset(params, 0, sizeof(LCM_PARAMS));
+    
+    params->type = 2;
 
-// 	params->type   = 2;
+    params->width = FRAME_WIDTH;
+    params->height = FRAME_HEIGHT;
 
-// 	params->width  = FRAME_WIDTH;
-// 	params->height = FRAME_HEIGHT;
+    params->dsi.mode = 1;
+    params->dsi.LANE_NUM = 3;
+    params->dsi.PS = 2;
+    params->dsi.packet_size = 512;
+    params->dsi.word_count = FRAME_WIDTH * 3; // 2160
+    params->dsi.PLL_CLOCK = 250;
+    params->dsi.cont_clock = 1;
+    params->dsi.ssc_disable = 1;
+    params->dsi.clk_lp_per_line_enable = 1;
 
-// 	// enable tearing-free
-// 	params->dbi.te_mode = 1;
-// 	params->dbi.te_edge_polarity = 0;
+    params->dsi.data_format.format = 2;
+    params->dsi.data_format.color_order = 0;
+    params->dsi.data_format.trans_seq = 0;
+    params->dsi.data_format.padding = 0;
 
-// 	params->dsi.mode = 1;
+    params->dsi.esd_check_enable = 1;
+    params->dsi.lcm_esd_check_table[0].cmd = 10;
+    params->dsi.lcm_esd_check_table[0].count = 1;
+    params->dsi.lcm_esd_check_table[0].para_list[0] = 0x9Cu; //-100 // 0x9Cu // 0xFF9C
+    params->dsi.customization_esd_check_enable = 1;
 
-// 	// DSI
-// 	/* Command mode setting */
-// 	//1 Three lane or Four lane
-// //	params->dsi.LANE_NUM				= LCM_THREE_LANE;
-// 	params->dsi.LANE_NUM				= LCM_FOUR_LANE;
-// 	//The following defined the fomat for data coming from LCD engine.
-// 	params->dsi.data_format.color_order = LCM_COLOR_ORDER_RGB;
-// 	params->dsi.data_format.trans_seq   = LCM_DSI_TRANS_SEQ_MSB_FIRST;
-// 	params->dsi.data_format.padding     = LCM_DSI_PADDING_ON_LSB;
-// 	params->dsi.data_format.format      = LCM_DSI_FORMAT_RGB888;
+    params->dsi.horizontal_sync_active = 4;
+    params->dsi.horizontal_backporch = 40;
+    params->dsi.horizontal_frontporch = 40;
+    params->dsi.horizontal_active_pixel = FRAME_WIDTH;
 
-// 	// Highly depends on LCD driver capability.
-// 	params->dsi.packet_size=128;
+    params->dsi.vertical_sync_active = 4;
+    params->dsi.vertical_backporch = 12;
+    params->dsi.vertical_frontporch = 16;
+    params->dsi.vertical_active_line = FRAME_HEIGHT;
 
-// 	/** Video mode setting
-// 	 because DSI/DPI HW design change,
-// 	 this parameters should be 0 when video mode in MT658X;
-// 	 or memory leakage */
-// 	params->dsi.intermediat_buffer_num = 0;
+    params->dsi.intermediat_buffer_num = 0;
 
-// 	params->dsi.PS=LCM_PACKED_PS_24BIT_RGB888;
-// 	params->dsi.word_count=720*3;	
-// 	params->dsi.compatibility_for_nvk = 1;
+    params->dbi.te_mode = 1;
+    params->dbi.te_edge_polarity = 0;
 
-// 	params->dsi.vertical_sync_active				= 4;// 3    2
-// 	params->dsi.vertical_backporch					= 38;// 20   1
-// 	params->dsi.vertical_frontporch					= 40; // 1  12
-// 	params->dsi.vertical_active_line				= FRAME_HEIGHT;
-
-// 	params->dsi.horizontal_sync_active				= 10;// 50  2
-// 	params->dsi.horizontal_backporch				= 72;
-// 	params->dsi.horizontal_frontporch				= 72 ;
-// 	params->dsi.horizontal_active_pixel				= FRAME_WIDTH;
-
-// 	// Bit rate calculation
-// 	// 1 Every lane speed
-// 	params->dsi.pll_div1=4;
-// 	params->dsi.pll_div2=12;	
-// 	params->dsi.fbk_div =16;	
-	  
-	params->dsi.horizontal_frontporch_byte = 3;
-	//params->dsi.CLK_HS_PRPR = 512;
-	//params->dsi.CLK_TRAIL = 2160;
-	params->dsi.pll_div2 = 12;
-	params->dsi.fbk_div = 16;
-	params->dsi.dsc_params.scale_value = 250;
-	params->dsi.lfr_enable = 10;
-	params->dsi.lfr_enable = -100;
-	
-	params->width = 720;
-	
-	params->type = 2;
-	params->dsi.horizontal_frontporch_word_count = 2;
-	params->dsi.TA_SACK = 2;
-	
-	params->dsi.rg_bp = 720;
-	
-	params->height = 1280;
-	
-	params->dsi.pll_posdiv = 1280;
-	params->dbi.te_mode = 1;
-	
-	params->dsi.horizontal_active_pixel = 1; //wtf
-	
-	params->dsi.dsc_params.final_offset = 1;
-	params->dsi.dsc_params.nfl_bpg_offset = 1;
-	params->dsi.send_frame_enable = 1;
-	params->dsi.vertical_vfp_lp = 1;
-	
-	params->dsi.lane_swap[1][5] = 1;
-	
-	params->dsi.lfr_enable = 1;
-	params->dbi.te_edge_polarity = 0;
-	
-	params->dsi.rgb_byte = 0;
-	params->dsi.horizontal_sync_active_word_count = 0;
-	params->dsi.horizontal_backporch_word_count = 0;
-	params->dsi.HS_TRAIL = 0;
-	params->dsi.pll_div1 = 4;
-	params->dsi.pll_s2qdiv = 4;
-	params->dsi.fbk_sel = 40;
-	params->dsi.rg_bir = 40;
 }
 
 static void lcm_init(void)
 {
-	SET_RESET_PIN(1);
-	MDELAY(10);
-	SET_RESET_PIN(0);
-	MDELAY(10);
-	SET_RESET_PIN(1);
-	MDELAY(120);      
-	
-	push_table(lcm_initialization_setting, sizeof(lcm_initialization_setting) / sizeof(struct LCM_setting_table), 1);
+    LCM_LOGD("Called!");
+
+    SET_RESET_PIN(1);
+    MDELAY(10);
+    SET_RESET_PIN(0);
+    MDELAY(10);
+    SET_RESET_PIN(1);
+    MDELAY(120);
+
+    push_table(lcm_initialization_setting,
+     sizeof(lcm_initialization_setting) / sizeof(struct LCM_setting_table), 1);
 }
 
-static unsigned int rgk_lcm_compare_id(void)
-{
-	return 1;
-	
+static unsigned int lcm_compare_id(void) {
+
+    unsigned int data_array[16];
+    unsigned int id = 0;
+    unsigned char buffer[3];
+
+    SET_RESET_PIN(1);
+    MDELAY(1);
+    SET_RESET_PIN(0);
+    MDELAY(1);
+    SET_RESET_PIN(1);
+    MDELAY(20);
+
+    data_array[0] = 0x63902;
+    data_array[1] = 0x52AA55F0;
+    data_array[2] = 0x108;
+    dsi_set_cmdq(data_array, 3, 1);
+    
+    data_array[0] = 0x23700;
+    dsi_set_cmdq(data_array, 1, 1);
+
+    read_reg_v2(0xC5, buffer, 3);
+    
+    id = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
+    LCM_LOGD("Synced id is 0x%2x", id);
+    LCM_LOGD("buffer[3] = { %x, %x, %x }", buffer[0], buffer[1], buffer[2]);
+    
+    // v0 = v3 | (v2 << 8);
+    // return __clz(v0 - 0x5521) >> 5;
+
+    //return (LCM_ID == id) ? 1 : 0;
+
+    return 1;
 }
 
-static void lcm_suspend(void)
-{
-	unsigned int data_array[16];
-	
-	// Display Off
-	data_array[0] = 0x00280500; 
-	dsi_set_cmdq(data_array, 1, 1);
-		
-	MDELAY(20);
-	
-	// Sleep In
-	data_array[0] = 0x00100500;
-	dsi_set_cmdq(data_array, 1, 1);
-	   
-	MDELAY(120);
-	SET_RESET_PIN(0);
-	MDELAY(50);
 
+static unsigned int rgk_lcm_compare_id()
+{
+
+    int data[4] = {0,0,0,0};
+    int ret = 0;
+    int lcm_vol = 0;
+    int rawdata = 0;
+  
+    // ret = IMM_GetOneChannelValue_(12, data, &rawdata) < 0
+    //   || (lcm_vol = 10 * data[~037777777776] + 1000 * data[0], printk_(), (unsigned int)lcm_vol > 0x64)
+    
+    ret = IMM_GetOneChannelValue(12, data, &rawdata);
+    lcm_vol = data[0] * 1000 + data[1] * 10;
+
+    LCM_LOGD("lcm_vol = %d", lcm_vol);
+
+    // if (lcm_vol>=MIN_VOLTAGE &&lcm_vol <= MAX_VOLTAGE && lcm_compare_id())
+    //     return 1;
+    
+    if (!ret && (lcm_vol > 100))
+        ret = lcm_compare_id();
+
+    return ret;
+}
+
+static void lcm_suspend(void) 
+{
+    unsigned int data_array[16];
+
+    LCM_LOGD("Using dsi_set_cmdq styled lcm_suspend!");
+
+    // Display Off
+    data_array[0] = 0x00280500;
+    dsi_set_cmdq(data_array, 1, 1);
+
+    MDELAY(20);
+
+    // Sleep In
+    data_array[0] = 0x00100500;
+    dsi_set_cmdq(data_array, 1, 1);
+    
+    MDELAY(120);
+    SET_RESET_PIN(0);
+    MDELAY(50);
+
+    if(lcm_compare_id())
+        LCM_LOGD("yay! lcm id is correct.");
 }
 
 static void lcm_resume(void)
@@ -347,5 +373,5 @@ LCM_DRIVER nt35521_boe_hd720_5p0_xingliangda_t591_dg =
 	.init           = lcm_init,
 	.suspend        = lcm_suspend,
 	.resume         = lcm_resume,
-	.compare_id     = rgk_lcm_compare_id,
+	.compare_id     = lcm_compare_id,
 };
