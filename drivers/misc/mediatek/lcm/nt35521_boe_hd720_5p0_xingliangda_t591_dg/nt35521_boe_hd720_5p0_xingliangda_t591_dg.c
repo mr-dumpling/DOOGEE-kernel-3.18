@@ -310,7 +310,7 @@ static unsigned int lcm_compare_id(void) {
     return 1;
 }
 
-
+/*
 static unsigned int rgk_lcm_compare_id()
 {
 
@@ -334,7 +334,7 @@ static unsigned int rgk_lcm_compare_id()
         ret = lcm_compare_id();
 
     return ret;
-}
+}*/
 
 static void lcm_suspend(void) 
 {
@@ -367,7 +367,7 @@ static void lcm_resume(void)
 
 LCM_DRIVER nt35521_boe_hd720_5p0_xingliangda_t591_dg = 
 {
-    	.name		= "nt35521_boe_hd720_5p0_xingliangda_t591_dg",
+    	.name		= LCM_NAME,
 	.set_util_funcs = lcm_set_util_funcs,
 	.get_params     = lcm_get_params,
 	.init           = lcm_init,
