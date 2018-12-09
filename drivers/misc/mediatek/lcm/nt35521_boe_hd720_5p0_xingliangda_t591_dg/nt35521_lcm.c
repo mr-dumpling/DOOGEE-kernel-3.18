@@ -33,6 +33,8 @@
 #define read_reg(cmd)   lcm_util.dsi_dcs_read_lcm_reg(cmd)
 #define wrtie_cmd(cmd)	lcm_util.dsi_write_cmd(cmd)
 
+extern int IMM_GetOneChannelValue(int dwChannel, int data[4], int* rawdata);
+
 /* LCM Driver Implementations */
 
 static LCM_UTIL_FUNCS lcm_util = { 0 };
@@ -316,7 +318,7 @@ static unsigned int lcm_compare_id(void) {
 }
 
 
-static unsigned int rgk_lcm_compare_id()
+static unsigned int rgk_lcm_compare_id(void)
 {
 
     int data[4] = {0,0,0,0};
