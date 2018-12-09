@@ -87,8 +87,8 @@ LCM_DRIVER *lcm_driver_list[] = {
 	&ili9806e_hlt_hd720_dsi,
 #endif
 
-#if defined(nt35521_boe_hd720_5p0_xingliangda_t591_dg)
-	&nt35521_boe_hd720_5p0_xingliangda_t591_dg,
+#if defined(NT35521_BOE_HD720_5P0_XINGLIANGDA_T591_DG)
+	&nt35521_boe_hd720_5p0_xingliangda_t591_dg_lcm_drv,
 #endif
 	
 #if defined(ILI9881_HSD_HD720_5P0_HL_T592_OTD)
