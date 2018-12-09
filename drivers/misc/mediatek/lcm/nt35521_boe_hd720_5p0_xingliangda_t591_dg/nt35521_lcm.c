@@ -19,7 +19,7 @@
 #define UDELAY(n) (lcm_util.udelay(n))
 #define MDELAY(n) (lcm_util.mdelay(n))
 
-#define LCM_DBG_TAG "[LCM][V060]"
+#define LCM_DBG_TAG "[LCM][T591]"
 #ifndef BUILD_LK
 #define LCM_LOGD(str, args...) pr_info(LCM_DBG_TAG "[%s][%s] " str, LCM_NAME, __func__, ##args)
 #endif
@@ -36,6 +36,7 @@
 /* LCM Driver Implementations */
 
 static LCM_UTIL_FUNCS lcm_util = { 0 };
+int ata_checking = 0;
 
 struct LCM_setting_table {
     unsigned cmd;
@@ -56,6 +57,7 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
     {0xf7, 1, {0x05}},
     {0x6f, 1, {0x16}},
     {0xf7, 1, {0x10}},
+    // 
     {0xff, 4, {0xaa,0x55,0x25,0x00}},
     {0xf0, 5, {0x55,0xaa,0x52,0x08,0x00}},
     {0xb1, 2, {0x68,0x27}},
@@ -240,7 +242,7 @@ static void lcm_get_params(LCM_PARAMS *params) {
     params->dsi.esd_check_enable = 1;
     params->dsi.lcm_esd_check_table[0].cmd = 10;
     params->dsi.lcm_esd_check_table[0].count = 1;
-    params->dsi.lcm_esd_check_table[0].para_list[0] = 0x9Cu; //-100 // 0x9Cu // 0xFF9C
+    params->dsi.lcm_esd_check_table[0].para_list[0] = 0x9Cu; // -100 // ?0xFF9C
     params->dsi.customization_esd_check_enable = 1;
 
     params->dsi.horizontal_sync_active = 4;
@@ -262,7 +264,7 @@ static void lcm_get_params(LCM_PARAMS *params) {
 
 static void lcm_init(void)
 {
-    LCM_LOGD("Called!");
+    LCM_LOGD("!");
 
     SET_RESET_PIN(1);
     MDELAY(10);
@@ -280,6 +282,7 @@ static unsigned int lcm_compare_id(void) {
     unsigned int data_array[16];
     unsigned int id = 0;
     unsigned char buffer[3];
+    unsigned int tmp = 0x02;
 
     SET_RESET_PIN(1);
     MDELAY(1);
@@ -293,54 +296,50 @@ static unsigned int lcm_compare_id(void) {
     data_array[2] = 0x108;
     dsi_set_cmdq(data_array, 3, 1);
     
-    data_array[0] = 0x23700;
+    if(ata_checking) tmp = 0x03; // [lcm_ata_check]
+
+    data_array[0] = (tmp << 16) | (0x37 << 8) | 0x00; // 0x23700, 0x33700
     dsi_set_cmdq(data_array, 1, 1);
+
+    // vC11A8CD0 = 1; [lcm_ata_check]
 
     read_reg_v2(0xC5, buffer, 3);
     
-    id = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2];
+    id = (buffer[1] << 8) | buffer[2];
     LCM_LOGD("Synced id is 0x%2x", id);
     LCM_LOGD("buffer[3] = { %x, %x, %x }", buffer[0], buffer[1], buffer[2]);
-    
-    // v0 = v3 | (v2 << 8);
-    // return __clz(v0 - 0x5521) >> 5;
 
-    //return (LCM_ID == id) ? 1 : 0;
+    // vC11A8CD0 = 0; [lcm_ata_check]
+    ata_checking = 0;
 
-    return 1;
+    return (LCM_ID == id) ? 1 : 0;
 }
 
-/*
+
 static unsigned int rgk_lcm_compare_id()
 {
 
     int data[4] = {0,0,0,0};
-    int ret = 0;
+    int res = 0;
     int lcm_vol = 0;
     int rawdata = 0;
-  
-    // ret = IMM_GetOneChannelValue_(12, data, &rawdata) < 0
-    //   || (lcm_vol = 10 * data[~037777777776] + 1000 * data[0], printk_(), (unsigned int)lcm_vol > 0x64)
-    
-    ret = IMM_GetOneChannelValue(12, data, &rawdata);
-    lcm_vol = data[0] * 1000 + data[1] * 10;
 
+    res = IMM_GetOneChannelValue(12, data, &rawdata);
+
+    lcm_vol = data[0] * 1000 + data[1] * 10;
     LCM_LOGD("lcm_vol = %d", lcm_vol);
 
-    // if (lcm_vol>=MIN_VOLTAGE &&lcm_vol <= MAX_VOLTAGE && lcm_compare_id())
-    //     return 1;
-    
-    if (!ret && (lcm_vol > 100))
-        ret = lcm_compare_id();
+    if (res < 0 || lcm_vol > 100)
+        return 0; // error if here
 
-    return ret;
-}*/
+    return lcm_compare_id();
+}
 
 static void lcm_suspend(void) 
 {
     unsigned int data_array[16];
 
-    LCM_LOGD("Using dsi_set_cmdq styled lcm_suspend!");
+    LCM_LOGD("Using dsi_set_cmdq v1!");
 
     // Display Off
     data_array[0] = 0x00280500;
@@ -351,12 +350,16 @@ static void lcm_suspend(void)
     // Sleep In
     data_array[0] = 0x00100500;
     dsi_set_cmdq(data_array, 1, 1);
-    
+
     MDELAY(120);
     SET_RESET_PIN(0);
     MDELAY(50);
 
-    if(lcm_compare_id())
+    LCM_LOGD("Using dsi_set_cmdq v2/p!");
+    push_table(lcm_deep_sleep_mode_in_setting,
+     sizeof(lcm_deep_sleep_mode_in_setting) / sizeof(struct LCM_setting_table), 1);
+
+    if(rgk_lcm_compare_id())
         LCM_LOGD("yay! lcm id is correct.");
 }
 
@@ -365,13 +368,21 @@ static void lcm_resume(void)
 	lcm_init();
 }
 
-LCM_DRIVER nt35521_boe_hd720_5p0_xingliangda_t591_dg = 
+static unsigned int lcm_ata_check(unsigned char *buffer)
 {
-    	.name		= LCM_NAME,
+    ata_checking = 1;
+    return lcm_compare_id();
+}
+
+/* Get LCM Driver Hooks */
+LCM_DRIVER nt35521_boe_hd720_5p0_xingliangda_t591_dg_lcm_drv = 
+{
+	.name		= LCM_NAME,
 	.set_util_funcs = lcm_set_util_funcs,
 	.get_params     = lcm_get_params,
 	.init           = lcm_init,
-	.suspend        = lcm_suspend,
-	.resume         = lcm_resume,
-	.compare_id     = lcm_compare_id,
+    	.suspend        = lcm_suspend,
+    	.resume         = lcm_resume,
+	.compare_id     = rgk_lcm_compare_id,
+    	.ata_check      = lcm_ata_check
 };
